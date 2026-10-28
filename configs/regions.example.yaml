@@ -1,0 +1,5 @@
+# Normalized rectangles (0..1). Edit to match your camera view.
+regions:
+  - {name: top_shelf,    x1: 0.00, y1: 0.00, x2: 1.00, y2: 0.33}
+  - {name: middle_shelf, x1: 0.00, y1: 0.33, x2: 1.00, y2: 0.66, low_threshold: 0.25}
+  - {name: bottom_shelf, x1: 0.00, y1: 0.66, x2: 1.00, y2: 1.00}

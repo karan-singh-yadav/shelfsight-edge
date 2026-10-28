@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Project artifacts (large or licensed: never commit by default)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+runs/
+*.pt
+*.onnx
+*.engine
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.mp4
+*.avi
+
+# Generated reports: keep the folders, commit curated results deliberately
+reports/history.jsonl
+reports/figures/*
+!reports/figures/.gitkeep
+reports/benchmarks/*.json
+reports/benchmarks/*.csv
+!reports/benchmarks/.gitkeep
+!reports/figures/.gitkeep
+
+# Secrets and local config
+.env
+.env.*
+*.env
+*.local.yaml
+*.pem
+*.key
+
+# Editors / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+.DS_Store
+Thumbs.db
+logs/
+*.log
+
+# Personal test media (sample photos may carry their own licences). Put curated README
+# screenshots in docs/images/ instead.
+/test*.jpg
+/test*.jpeg
+/test*.png
+/test_media/
+/notes*.txt

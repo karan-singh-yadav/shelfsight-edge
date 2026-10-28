@@ -1,0 +1,17 @@
+# Application defaults. Relative paths resolve against the project root.
+paths:
+  data_dir: data
+  models_dir: models
+  reports_dir: reports
+
+inference:
+  backend: pytorch        # pytorch | onnx
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  imgsz: 640
+  num_threads: 0          # 0 = library default; set explicitly for benchmarks
+
+logging:
+  level: INFO
+  json_format: false
+  log_file: null          # e.g. logs/shelfsight.log

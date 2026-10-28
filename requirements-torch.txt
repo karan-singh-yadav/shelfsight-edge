@@ -1,0 +1,15 @@
+# Training / export / PyTorch backend (local CPU or cloud GPU). Install order matters:
+#   1) pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+#      (on a CUDA machine such as Colab, use the default index or the matching CUDA index)
+#   2) pip install -r requirements.txt -r requirements-torch.txt
+#   3) pip install ultralytics==8.4.185 --no-deps
+# Ultralytics is installed with --no-deps because its dependency on `opencv-python` would
+# replace/conflict with the headless OpenCV build used here. Ultralytics is AGPL-3.0:
+# see docs/LICENSES.md.
+onnx==1.23.2
+matplotlib==3.10.8
+requests==2.33.1
+polars==2.0.0
+ultralytics-thop==2.2.3
+py-cpuinfo==9.0.0
+tqdm==4.70.1

@@ -1,0 +1,9 @@
+# Dataset configuration (consumed starting in Phase 2; values here are placeholders to edit).
+sku110k:
+  root: data/sku110k        # extract the official archive here (obtain it yourself, see README)
+  classes: [object]         # SKU-110K has ONE generic class; it has no SKU identity labels
+custom:
+  root: data/custom
+  classes: [bottle, can, box, snack]   # provisional; finalise after collecting images
+splits:
+  seed: 42

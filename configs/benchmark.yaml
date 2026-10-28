@@ -1,0 +1,6 @@
+# Benchmark protocol (consumed starting in Phase 7).
+warmup_runs: 10
+timed_runs: 100
+batch_size: 1
+imgsz: 640
+num_threads: 4      # pin explicitly so PyTorch and ONNX Runtime are compared fairly

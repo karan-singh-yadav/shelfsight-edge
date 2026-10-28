@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shelfsight"
+version = "1.0.0"
+description = "ShelfSight Edge: CPU-deployable retail shelf monitoring with object detection and tracking."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "numpy",
+    "pandas",
+    "opencv-python-headless",
+    "pillow",
+    "pyyaml",
+    "psutil",
+    "scipy",
+    "onnxruntime",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "onnx", "streamlit", "plotly"]
+app = ["streamlit", "plotly"]
+torch = ["onnx", "ultralytics"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "integration: tests that need a real model or dataset fixture (deselect with -m 'not integration')",
+]
+
+[tool.ruff]
+extend-exclude = ["notebooks"]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts", "app"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
