@@ -8,11 +8,12 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Inference](https://img.shields.io/badge/inference-ONNX%20Runtime%20%7C%20PyTorch-orange)
 ![GPU](https://img.shields.io/badge/GPU-not%20required-lightgrey)
-[![CI](https://github.com/YOUR-USERNAME/shelfsight-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/shelfsight-edge/actions)
+[![CI](https://github.com/karan-singh-yadav/shelfsight-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/karan-singh-yadav/shelfsight-edge/actions)
 
 </div>
 
-![Dashboard overview](docs/images/dashboard-overview.png)
+![Dashboard overview](<img width="1354" height="632" alt="Screenshot 2026-10-28 232002" src="https://github.com/user-attachments/assets/7fd70ce8-0d92-4c38-88a3-66048a360eb3" />
+)
 
 > **Honest status.** The full pipeline, dashboard and test suite work. The bundled model is a general-purpose **COCO-pretrained YOLOv8n**, which does **not** recognise packaged grocery products yet; fine-tuning on shelf data (e.g. SKU-110K or your own photos) is the next step. All benchmark and accuracy cells below read **Not measured** until measured on real data and hardware.
 >
@@ -35,9 +36,13 @@ Store cameras and edge boxes rarely have a GPU. ShelfSight Edge is built to run,
 ## Screenshots
 | Image detection | Video analytics |
 |---|---|
-| ![Image detection](docs/images/image-detection.png) | ![Video analytics](docs/images/video-analytics.png) |
+| ![Image detection](<img width="1366" height="768" alt="Screenshot (34)" src="https://github.com/user-attachments/assets/a095cd9a-18f0-4525-acdd-59b71961176a" />
+) | ![Video analytics](<img width="1366" height="768" alt="Screenshot (36)" src="https://github.com/user-attachments/assets/3ecf964d-b2ae-429d-ad78-c16daa75ce46" />
+) |
 | **Shelf monitoring** | **Benchmarking** |
-| ![Shelf monitoring](docs/images/shelf-monitoring.png) | ![Benchmarking](docs/images/benchmarking.png) |
+| ![Shelf monitoring](<img width="1366" height="768" alt="Screenshot (38)" src="https://github.com/user-attachments/assets/79109e4e-1e6b-4a2a-842f-c075d703cfad" />
+) | ![Benchmarking](<img width="1366" height="768" alt="Screenshot (39)" src="https://github.com/user-attachments/assets/bf5a1c8e-6265-4eda-a35d-01e118e511bc" />
+) |
 
 *Screenshots use sample photos and a composite demo image with the COCO-pretrained model. They show the pipeline working, not accuracy on grocery products.*
 
