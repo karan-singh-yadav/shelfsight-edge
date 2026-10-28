@@ -1,53 +1,152 @@
-# ShelfSight Edge
+<div align="center">
 
-CPU-first retail shelf monitoring: object detection, multi-object tracking, counting and **estimated** shelf occupancy, with PyTorch and ONNX Runtime backends, FP32/INT8 comparison, a reproducible benchmark harness and a Streamlit dashboard.
+# 🛒 ShelfSight Edge
 
-> **Disclaimer:** shelf occupancy is an *estimate* of visible product coverage, not an audited inventory count.
-> **No performance numbers are published here yet.** All results in `docs/EVALUATION.md` read "Not measured" until you run the benchmark on your hardware and data.
+**Retail shelf monitoring on a plain CPU: detect products, track them in video, and estimate shelf occupancy.**
 
-## Quick start (details: [docs/VSCODE_GUIDE.md](docs/VSCODE_GUIDE.md))
+![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Inference](https://img.shields.io/badge/inference-ONNX%20Runtime%20%7C%20PyTorch-orange)
+![GPU](https://img.shields.io/badge/GPU-not%20required-lightgrey)
+[![CI](https://github.com/YOUR-USERNAME/shelfsight-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/shelfsight-edge/actions)
+
+</div>
+
+![Dashboard overview](docs/images/dashboard-overview.png)
+
+> **Honest status.** The full pipeline, dashboard and test suite work. The bundled model is a general-purpose **COCO-pretrained YOLOv8n**, which does **not** recognise packaged grocery products yet; fine-tuning on shelf data (e.g. SKU-110K or your own photos) is the next step. All benchmark and accuracy cells below read **Not measured** until measured on real data and hardware.
+>
+> **Shelf occupancy is an estimate** of visible product coverage, not an audited inventory count.
+
+## Why this project
+Store cameras and edge boxes rarely have a GPU. ShelfSight Edge is built to run, be measured and be deployed on an ordinary laptop CPU, and it is strict about not claiming performance it has not measured.
+
+## Features
+- **Detection** with two interchangeable backends: PyTorch and ONNX Runtime (CPU), behind one interface.
+- **Tracking** with a ByteTrack-style tracker (own implementation) and virtual-line crossing counts.
+- **Shelf regions**: split a shelf into rectangles, get per-region counts, estimated occupancy and low-occupancy alerts, exported as timestamped CSV.
+- **Honest counting**: detections per frame, unique tracks and line crossings are reported separately, never mixed up.
+- **ONNX export and static INT8 quantization** scripts (calibration on training images only).
+- **Reproducible benchmarks**: median/p95 latency, throughput, memory, CPU/OS/library versions and model hash are recorded in every result file.
+- **Evaluation**: mAP50, mAP50-95, precision, recall and object-count error, cross-checked against Ultralytics' AP implementation.
+- **Dataset tooling**: annotation validation, YOLO conversion, statistics, and leak-free train/val/test splits using perceptual hashing.
+- **Streamlit dashboard** with six tabs, and a CPU-only Docker image (ONNX Runtime).
+
+## Screenshots
+| Image detection | Video analytics |
+|---|---|
+| ![Image detection](docs/images/image-detection.png) | ![Video analytics](docs/images/video-analytics.png) |
+| **Shelf monitoring** | **Benchmarking** |
+| ![Shelf monitoring](docs/images/shelf-monitoring.png) | ![Benchmarking](docs/images/benchmarking.png) |
+
+*Screenshots use sample photos and a composite demo image with the COCO-pretrained model. They show the pipeline working, not accuracy on grocery products.*
+
+## How it works
+```mermaid
+flowchart LR
+    A[Image / Video] --> B[OpenCV decode + letterbox]
+    B --> C{Backend}
+    C -->|PyTorch| D[YOLOv8]
+    C -->|ONNX Runtime CPU| E[ONNX FP32 / INT8]
+    D --> F[Detections]
+    E --> G[Own decode + NMS] --> F
+    F --> H[ByteTrack-style tracker]
+    F --> I[Shelf-region analytics]
+    H --> J[Counts and line crossings]
+    I --> K[Occupancy + alerts + CSV]
+    J --> K
+    K --> L[Streamlit dashboard]
+```
+More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Quick start
+Requires Python 3.11 or 3.12. No GPU needed.
+
 ```bash
-python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt && pip install -e . --no-deps
-python scripts/check_env.py && pytest
+git clone https://github.com/YOUR-USERNAME/shelfsight-edge.git
+cd shelfsight-edge
+python -m venv .venv
+# Windows: .venv\Scripts\Activate.ps1      Linux/macOS: source .venv/bin/activate
+pip install -r requirements-dev.txt
+pip install -e . --no-deps
+python scripts/check_env.py
+pytest
+```
+
+Baseline detector (PyTorch, export and training tools; the dashboard itself runs on ONNX Runtime alone):
+```bash
+pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements-torch.txt
+pip install ultralytics==8.4.185 --no-deps
+python scripts/download_weights.py                    # explicit ~6 MB download into models/
+python scripts/export_onnx.py --weights models/yolov8n.pt --check-image your_photo.jpg
 streamlit run app/streamlit_app.py
 ```
-Python 3.11 or 3.12. No GPU or CUDA needed locally. The dashboard and ONNX path need no PyTorch. PyTorch/Ultralytics (training, export, baseline) are installed separately, see `requirements-torch.txt`.
+In the sidebar choose a model from `models/` and press **Load model**. Nothing is loaded or downloaded automatically.
 
-## What is in the box
-| Area | Where | Status |
-|---|---|---|
-| Detector interface, PyTorch + ONNX Runtime CPU backends, own YOLOv8 decode/NMS | `src/shelfsight/inference/` | tested, incl. real YOLOv8n PyTorch-vs-ONNX agreement on one image |
-| Dataset validation, YOLO conversion, stats, leak-free splits, synthetic fixture | `src/shelfsight/data/`, `scripts/prepare_dataset.py` | tested on synthetic data; real SKU-110K not seen |
-| Tracking (ByteTrack-style), counting, line crossing | `tracking/`, `analytics/counting.py` | unit-tested; not validated on MOT benchmarks |
-| Shelf regions, occupancy, low-occupancy alerts, CSV reports | `analytics/` | unit-tested |
-| Video pipeline (streaming, stride, annotated output, stats) | `video/processor.py`, `scripts/process_video.py` | tested with synthetic video and a real-model run |
-| Training wrapper (CPU smoke + GPU), Colab notebook | `scripts/train.py`, `notebooks/` | CPU smoke run executed; GPU/Colab run NOT executed |
-| ONNX export + validation, static INT8 quantization | `scripts/export_onnx.py`, `scripts/quantize.py` | executed on YOLOv8n; INT8 accuracy on real data not measured |
-| Metrics (mAP, P/R, count MAE), evaluator, benchmark, failure analysis | `src/shelfsight/evaluation/` | tested; mAP cross-checked against Ultralytics |
-| Streamlit dashboard (6 tabs) | `app/` | headless startup and loaded-model render tested; manual click-through by you still needed |
-| Docker (CPU, ONNX only) | `Dockerfile` | written, NOT built or run |
-| CI | `.github/workflows/ci.yml` | written, not run |
+## Command-line tools
+| Task | Command |
+|---|---|
+| Detect on one image | `python scripts/detect.py --image img.jpg --model models/yolov8n.onnx` |
+| Process a video | `python scripts/process_video.py --video clip.mp4 --model models/yolov8n.onnx --out out.mp4 --stride 2` |
+| Prepare a dataset | `python scripts/prepare_dataset.py --help` (validate, stats, visualize, convert, split, verify-splits) |
+| Train (CPU smoke / GPU) | `python scripts/train.py --data data/yolo/dataset.yaml --smoke --device cpu` |
+| Export to ONNX | `python scripts/export_onnx.py --weights models/best.pt --check-image img.jpg` |
+| Quantize to INT8 | `python scripts/quantize.py --model models/best.onnx --calib-dir data/yolo/images/train --out models/best_int8.onnx --exclude-head` |
+| Evaluate | `python scripts/evaluate.py --model models/best.onnx --images <test/images> --labels <test/labels> --out reports/benchmarks/onnx_fp32_eval.json` |
+| Benchmark one model | `python scripts/benchmark.py --model models/best.onnx --images <test/images> --threads 2 --out reports/benchmarks/onnx_fp32.json` |
+| Build comparison table | `python scripts/make_report.py` |
 
-## Common commands
-```bash
-python scripts/download_weights.py                         # explicit weights download
-python scripts/detect.py --image img.jpg --model models/yolov8n.onnx
-python scripts/prepare_dataset.py --help                   # validate | stats | visualize | convert | split | verify-splits
-python scripts/train.py --data data/yolo/dataset.yaml --smoke --device cpu
-python scripts/export_onnx.py --weights models/best.pt --check-image img.jpg
-python scripts/quantize.py --model models/best.onnx --calib-dir data/yolo/images/train --out models/best_int8.onnx --exclude-head
-python scripts/evaluate.py --model models/best.onnx --images <test/images> --labels <test/labels> --out reports/benchmarks/onnx_fp32_eval.json
-python scripts/benchmark.py --model models/best.onnx --images <test/images> --threads 4 --out reports/benchmarks/onnx_fp32.json
-python scripts/make_report.py
+## Train on your own data
+1. Prepare data: [docs/DATASETS.md](docs/DATASETS.md) (SKU-110K notes and a custom-dataset workflow).
+2. Train on a free Colab GPU with [notebooks/train_colab.ipynb](notebooks/train_colab.ipynb), then download `best.pt`.
+3. Export, evaluate and benchmark on your CPU, and fill in [docs/EVALUATION.md](docs/EVALUATION.md).
+
+## Results
+| Model | mAP50 | mAP50-95 | Median ms | p95 ms | Size MB |
+|---|---|---|---|---|---|
+| Pretrained YOLOv8n (class-agnostic) | Not measured | Not measured | Not measured | Not measured | Not measured |
+| Fine-tuned PyTorch | Not measured | Not measured | Not measured | Not measured | Not measured |
+| ONNX FP32 | Not measured | Not measured | Not measured | Not measured | Not measured |
+| ONNX INT8 | Not measured | Not measured | Not measured | Not measured | Not measured |
+
+## Engineering findings (single test image, not benchmarks)
+- **Input geometry matters.** Default PyTorch inference pads to a minimal rectangle while the static ONNX model needs a square. They disagreed on a borderline detection until the PyTorch backend used square letterboxing; scores then matched to three decimals.
+- **INT8 is not automatic.** Quantizing the whole YOLOv8n graph returned zero detections on a test image; keeping the Detect head in FP32 recovered them. Accuracy and speed on real data: not measured.
+- **A library side effect broke validation.** Importing Ultralytics patches `PIL.Image.open`, changing the exception for corrupt images; the validators now handle it, with a regression test.
+
+Details and protocol: [docs/EVALUATION.md](docs/EVALUATION.md).
+
+## Project structure
+```
+app/            Streamlit dashboard
+configs/        default, dataset, benchmark and example shelf-region configs
+docs/           architecture, datasets, evaluation, limitations, licenses, interview notes
+notebooks/      Colab training notebook
+scripts/        command-line tools
+src/shelfsight/ inference, tracking, analytics, video, evaluation, data
+tests/          pytest suite
 ```
 
-## Docs
-[Architecture](docs/ARCHITECTURE.md) | [Datasets](docs/DATASETS.md) | [Evaluation protocol and findings](docs/EVALUATION.md) | [Limitations](docs/LIMITATIONS.md) | [Licenses](docs/LICENSES.md) | [Interview prep](docs/INTERVIEW_PREP.md) | [Resume bullets](docs/RESUME_BULLETS.md)
+## Testing and quality
+```bash
+pytest -m "not integration"     # unit tests, no model download needed
+pytest                          # also runs real-model checks if weights are present
+ruff check . && ruff format --check .
+```
 
-## Engineering notes
-* Backends are interchangeable behind `Detections`/`Detector`; the PyTorch backend letterboxes to a square input (`rect=False`) so it sees exactly what the static ONNX model sees.
-* Benchmarks record CPU, RAM, OS, Python and library versions, input size, batch size, warm-up/timed runs, thread settings and model hash, and state which stages each FPS figure includes.
-* Large files (data, weights, videos) are git-ignored; publish weights only where licences allow ([docs/LICENSES.md](docs/LICENSES.md)).
+## Docker (CPU, ONNX Runtime only)
+```bash
+docker build -t shelfsight-edge .
+docker run --rm -p 8501:8501 -v "$(pwd)/models:/app/models" -v "$(pwd)/reports:/app/reports" shelfsight-edge
+```
+The Dockerfile is written but has not been built or run by the author yet.
 
-Code is MIT licensed. Third-party components (notably Ultralytics, AGPL-3.0) keep their own licences.
+## Limitations
+Occupancy is an estimate affected by occlusion, perspective and camera angle; the tracker is not validated on MOT benchmarks; the ONNX model has a fixed 640x640 input; measured CPU latency on a low-power laptop is far from real-time. Full list: [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+
+## Licenses
+Code: MIT ([LICENSE](LICENSE)). Ultralytics (AGPL-3.0) and the SKU-110K dataset (academic, non-commercial) keep their own terms; datasets and weights are not included in this repository. See [docs/LICENSES.md](docs/LICENSES.md).
+
+## Author
+**Your Name** · [GitHub](https://github.com/karan-singh-yadav) · [LinkedIn](https://www.linkedin.com/in/karan-singh-yadav-935b36307/)

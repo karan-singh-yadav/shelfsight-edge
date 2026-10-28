@@ -263,9 +263,7 @@ with tabs[2]:
                 st.info(f"ffmpeg found ({found}) but conversion failed; download below.")
             else:
                 st.info("ffmpeg not found: no preview. You can still download below.")
-        st.download_button(
-            "Download annotated video", vpath.read_bytes(), vpath.name, "video/mp4"
-        )
+        st.download_button("Download annotated video", vpath.read_bytes(), vpath.name, "video/mp4")
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Frames processed", stats_d["frames_processed"])
         m2.metric("Mean detections/frame", f"{stats_d['mean_detections_per_frame']:.1f}")
